@@ -2,11 +2,15 @@
 -- Table structure for table `DBPEDIALIVE_CACHE`
 --
 
-SET SESSION innodb_file_per_table=1;
-SET SESSION innodb_file_format=Barracuda;
+SET GLOBAL innodb_file_per_table=1;
+SET GLOBAL innodb_file_format=Barracuda;
 
 DROP TABLE IF EXISTS `DBPEDIALIVE_CACHE`;
 CREATE TABLE IF NOT EXISTS `DBPEDIALIVE_CACHE` (
+  `wikiLanguage` varchar(15)
+     NOT NULL
+     DEFAULT ''
+     COMMENT 'The wiki language',
   `pageID` int(11)
       NOT NULL
       DEFAULT '0'
@@ -48,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `DBPEDIALIVE_CACHE` (
       DEFAULT '0'
       COMMENT 'If there was an error the last time the page was updated',
 
-  PRIMARY KEY (`pageID`),
+  PRIMARY KEY (`wikiLanguage`, `pageID`),
   KEY `updated_index` (`updated`)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ENGINE = InnoDB ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=4;
 

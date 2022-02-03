@@ -1,6 +1,6 @@
 package org.dbpedia.extraction.live.feeder;
 
-import org.dbpedia.extraction.live.core.LiveOptions;
+import org.dbpedia.extraction.live.config.LiveOptions;
 import org.dbpedia.extraction.live.queue.LiveQueueItem;
 import org.dbpedia.extraction.live.queue.LiveQueuePriority;
 import org.dbpedia.extraction.live.util.DateUtil;
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Lukas Faber, Stephan Haarmann, Sebastian Serth
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public class AllPagesFeeder extends Feeder {
 
-    private final Language language = Language.apply(LiveOptions.options.get("language"));
+    private final List<Language> language = LiveOptions.languages.stream().map(Language::apply).collect(Collectors.toList());
     private WikiApi api;
     private boolean isFinished = false;
     private String continueString = "-||";
@@ -38,7 +39,7 @@ public class AllPagesFeeder extends Feeder {
                           String folderBasePath) {
         super(feederName, queuePriority, defaultStartTime, folderBasePath);
         try {
-            api = new WikiApi(new URL(language.apiUri()), language);
+            api = new WikiApi(new URL(language.get(0).apiUri()), language.get(0)); //TODO multilanguage
         } catch (MalformedURLException exp) {
             logger.error(ExceptionUtil.toString(exp), exp);
         }
@@ -59,7 +60,7 @@ public class AllPagesFeeder extends Feeder {
         if (!isFinished) {
             List<Node> pageList = queryAllPagesAPI();
             for (Node page : pageList) {
-                queue.add(new LiveQueueItem(Long.parseLong(page.$bslash$at("pageid")), page.$bslash$at("title"), DateUtil.transformToUTC(new Date()), false, ""));
+                queue.add(new LiveQueueItem("some language", Long.parseLong(page.$bslash$at("pageid")), page.$bslash$at("title"), DateUtil.transformToUTC(new Date()), false, "")); //TODO implement multilanguage
             }
             if (continueTitle.isEmpty()) {
                 goToNextNamespace();

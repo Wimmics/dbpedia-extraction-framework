@@ -12,7 +12,6 @@ object HomepageExtractorConfig
         "ar" -> Set("الموقع", "الصفحة الرسمية", "موقع", "الصفحة الرئيسية", "صفحة ويب", "موقع ويب"),
         "bg" -> Set("сайт", "уебсайт"),
         "ca" -> Set("pàgina", "web", "lloc"),
-        "cs" -> Set("Webová stránka", "Oficiální web"),
         "de" -> Set("website", "homepage", "webpräsenz", "web", "site", "siteweb", "site web"),/*cleanup*/
         "el" -> Set("ιστότοπος", "ιστοσελίδα"),
         "en" -> Set("website", "homepage", "web", "site"),
@@ -23,12 +22,10 @@ object HomepageExtractorConfig
         "ga" -> Set("suíomh"),
         "it" -> Set("homepage", "sito", "sito web"),
         "ja" -> Set("homepage", "website", "web", "siteweb", "HP", "ホームページ", "ウェブ", "サイト", "ウェブサイト", "公式サイト"),
-        "mk" -> Set("Портал", "Мреж. место"),
         "nl" -> Set("website", "homepage", "hoofdpagina", "webpagina", "web", "site"),
         "pl" -> Set("web", "strona"),
         "pt" -> Set("website", "homepage", "web", "site", "siteweb", "site web", "página", "sitio", "pagina"),/*cleanup*/
-        "ru" -> Set("сайт"),
-        "uk" -> Set("веб-сайт", "домашня сторінка", "сайт")
+        "ru" -> Set("сайт")
     )
 
     def propertyNames(lang : String) : Set[String] = {
@@ -41,7 +38,6 @@ object HomepageExtractorConfig
         "ar" -> "وصلات خارجية",
         "bg" -> "Външни препратки",
         "ca" -> "(?:Enllaços externs|Enllaço extern)",
-        "cs" -> "Odkazy",
         "de" -> "Weblinks?",
         "el" -> "(?:Εξωτερικοί σύνδεσμοι|Εξωτερικές συνδέσεις)",
         "en" -> "External links?",
@@ -52,12 +48,10 @@ object HomepageExtractorConfig
         "ga" -> "(?:Naisc sheachtracha|Nasc sheachtrach)",
         "it" -> "Collegamenti esterni",
         "ja" -> "外部リンク",
-        "mk" -> "Надворешни врски",
         "nl" -> "(?:Externe links|Externe link)",
         "pl" -> "(?:Linki zewnętrzne|Link zewnętrzny)",
         "pt" -> "(?:Ligações externas|Ligação externa|Links externos|Link externo)",
-        "ru" -> "Ссылки",
-        "uk" -> "Посилання"
+        "ru" -> "Ссылки"
     )
 
     def externalLinkSections(lang : String) : String = {
@@ -68,7 +62,6 @@ object HomepageExtractorConfig
         "ar" -> "رسمي",
         "bg" -> "официален",
         "ca" -> "oficial",
-        "cs" -> "oficiální",
         "de" -> "offizielle",
         "el" -> "(?:επίσημος|επίσημη)",
         "en" -> "official",
@@ -79,12 +72,10 @@ object HomepageExtractorConfig
         "ga" -> "oifigiúil",
         "it" -> "ufficiale",
         "ja" -> "(?:公式|オフィシャル)",
-        "mk" -> "официјален",
         "nl" -> "(?:officieel|officiële)",
         "pl" -> "oficjalna",
         "pt" -> "oficial",
-        "ru" -> "официальный",
-        "uk" -> "офіційний"
+        "ru" -> "официальный"
     )
 
     def official(lang : String) : String = {
@@ -104,8 +95,7 @@ object HomepageExtractorConfig
         "ga" -> Map("Páxina_web" -> "1"),
         "ja" -> Map("Official website" -> "1"),
         "pt" -> Map("Oficial" -> "1"),
-        "ru" -> Map("Официальный сайт" -> "1"),
-        "uk" -> Map("Official" -> "1")
+        "ru" -> Map("Официальный сайт" -> "1")
     )
 
     def templateOfficialWebsite(lang : String) : Map[String, String] = {

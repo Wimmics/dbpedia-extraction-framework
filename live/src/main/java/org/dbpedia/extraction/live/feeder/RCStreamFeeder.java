@@ -5,7 +5,7 @@ import io.socket.IOAcknowledge;
 import io.socket.IOCallback;
 import io.socket.SocketIO;
 import io.socket.SocketIOException;
-import org.dbpedia.extraction.live.core.LiveOptions;
+import org.dbpedia.extraction.live.config.LiveOptions;
 import org.dbpedia.extraction.live.main.Main;
 import org.dbpedia.extraction.live.queue.LiveQueueItem;
 import org.dbpedia.extraction.live.queue.LiveQueuePriority;
@@ -133,7 +133,7 @@ public class RCStreamFeeder extends Feeder implements IOCallback {
             Long timestamp = jsonObject.get("timestamp").getAsLong();
             String eventTimestamp = DateUtil.transformToUTC(timestamp * 1000L);
             synchronized (this) {
-                events.add(new LiveQueueItem(-1, title, eventTimestamp, false, ""));
+                events.add(new LiveQueueItem("", -1, title, eventTimestamp, false, "")); //TODO implement multilanguage
                 logger.debug("Registered event for page " + title + " at " + eventTimestamp);
             }
         }

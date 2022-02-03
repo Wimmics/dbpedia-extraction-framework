@@ -45,45 +45,19 @@ extends WikiPageExtractor
         "issn" -> "https://www.worldcat.org/ISSN/",
         "oclc" -> "https://www.worldcat.org/oclc/"
     )
-
-    private val typeInformation: Map[String, String] = Map(
-        "cite book" -> "book",
-        "cite journal" -> "journal",
-        "cite web" -> "website",
-        "cite comic" -> "comic",
-        "comic strip reference" -> "comic_strip",
-        "cite conference" -> "conference_report",
-        "cite case" -> "court_case",
-        "cite encyclopedia" -> "encyclopedia",
-        "cite episode" -> "episode",
-        "cite mailing list" -> "mailing_list",
-        "cite map" -> "map",
-        "cite news" -> "news_article",
-        "cite newsgroup" -> "newsgroup",
-        "cite patent" -> "patent",
-        "cite press release" -> "press_release",
-        "cite AV media" -> "video",
-        "cite video game" -> "video_game"
-    )
-
     private val ontology = context.ontology
-
+    
     private val language = context.language
 
     private val wikiCode = language.wikiCode
 
     //FIXME put this in a config!
-    private val citationTemplatesRegex = List("cite.*".r, "citation.*".r, "literatur.*".r, "internetquelle.*".r, "bib.*".r,
-     "статья.*".r, "книга.*".r, "публикация.*".r, "cita.*".r, "cytuj.*".r, "citare.*".r, "citat.*".r, "kilde.*".r)
+    private val citationTemplatesRegex = List("cite.*".r, "citation.*".r, "literatur.*".r, "internetquelle.*".r, "bib.*".r)
 
     private val typeProperty = ontology.properties("rdf:type")
     //private val rdfLangStrDt = ontology.datatypes("rdf:langString")
     private val xsdStringDt = ontology.datatypes("xsd:string")
     private val isCitedProperty = context.language.propertyUri.append("isCitedBy")
-
-    private val dbpediaOntologyPrefix = "http://dbpedia.org/ontology/"
-
-    private val rdfType = context.ontology.properties("rdf:type")
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Regexes
@@ -161,29 +135,22 @@ extends WikiPageExtractor
 
             val citationIri = getCitationIRI(template).toString
 
-            // see https://github.com/dbpedia/extraction-framework/issues/594
-            if(!citationIri.contains(" ")){
-                quads += new Quad(language, DBpediaDatasets.CitationLinks, citationIri, isCitedProperty, subjectUri, template.sourceIri, null)
-                if (typeInformation.contains(resolvedTitle)){
-                    val typeIri = dbpediaOntologyPrefix + typeInformation(resolvedTitle)
-                    quads += new Quad(language, DBpediaDatasets.CitationData, citationIri, rdfType, typeIri, template.sourceIri, null)
-                }
-                for (property <- template.children; if !property.key.forall(_.isDigit)) {
-                    // exclude numbered properties
-                    // TODO clean HTML
+            quads += new Quad(language, DBpediaDatasets.CitationLinks, citationIri, isCitedProperty, subjectUri, template.sourceIri, null)
 
-                    val cleanedPropertyNode = NodeUtil.removeParentheses(property)
+            for (property <- template.children; if !property.key.forall(_.isDigit)) {
+                // exclude numbered properties
+                // TODO clean HTML
 
-                    val splitPropertyNodes = NodeUtil.splitPropertyNode(cleanedPropertyNode, splitPropertyNodeRegexInfobox)
-                    for (splitNode <- splitPropertyNodes; pr <- extractValue(splitNode); if pr.unit.nonEmpty) {
-                        val propertyUri = getPropertyUri(property.key)
-                        try {
+                val cleanedPropertyNode = NodeUtil.removeParentheses(property)
 
-                            quads += new Quad(language, DBpediaDatasets.CitationData, citationIri, propertyUri, pr.value, splitNode.sourceIri, pr.unit.get)
-                        }
-                        catch {
-                            case ex: IllegalArgumentException => println(ex)
-                        }
+                val splitPropertyNodes = NodeUtil.splitPropertyNode(cleanedPropertyNode, splitPropertyNodeRegexInfobox)
+                for (splitNode <- splitPropertyNodes; pr <- extractValue(splitNode); if pr.unit.nonEmpty) {
+                    val propertyUri = getPropertyUri(property.key)
+                    try {
+                        quads += new Quad(language, DBpediaDatasets.CitationData, citationIri, propertyUri, pr.value, splitNode.sourceIri, pr.unit.get)
+                    }
+                    catch {
+                        case ex: IllegalArgumentException => println(ex)
                     }
                 }
             }

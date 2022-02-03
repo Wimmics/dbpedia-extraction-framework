@@ -2,11 +2,10 @@ package org.dbpedia.extraction.wikiparser.impl.json
 
 import java.nio.channels.NonReadableChannelException
 
-import com.fasterxml.jackson.databind.{DeserializationFeature, JsonMappingException, ObjectMapper}
+import com.fasterxml.jackson.databind.{JsonMappingException, DeserializationFeature, ObjectMapper}
 import org.dbpedia.extraction.util.WikidataUtil
-import org.dbpedia.extraction.wikiparser.{JsonNode, Namespace, WikiPage}
-import org.wikidata.wdtk.datamodel.helpers.{DatamodelMapper, JsonDeserializer}
-//import org.wikidata.wdtk.datamodel.json.jackson.{JacksonItemDocument, JacksonPropertyDocument, JacksonTermedStatementDocument}
+import org.dbpedia.extraction.wikiparser.{WikiPage, JsonNode, Namespace}
+import org.wikidata.wdtk.datamodel.json.jackson.{JacksonTermedStatementDocument, JacksonPropertyDocument, JacksonItemDocument}
 
 import scala.util.matching.Regex
 
@@ -27,7 +26,7 @@ object JsonWikiParser {
 
 /**
  * JsonWikiParser class use wikidata Toolkit to parse wikidata json
- * wikidata json parsed and converted to wikidata JsonDeserializer
+ * wikidata json parsed and converted to wikidata JacksonTermedStatementDocument
  */
 
 class JsonWikiParser {
@@ -39,23 +38,24 @@ class JsonWikiParser {
     else {
 
       try {
-        getDocument(page,page.source)
+        getJacksonDocument(page,page.source)
       } catch {
         case e: JsonMappingException => {
           if (page.isRedirect){
             None //redirect page, nothing to extract
           } else {
-            getDocument(page,fixBrokenJson(page.source))
+            getJacksonDocument(page,fixBrokenJson(page.source))
           }
         }
       }
     }
   }
 
-  private def getDocument(page: WikiPage, jsonString: String): Option[JsonNode] = {
-    val document = new JsonDeserializer(WikidataUtil.wikidataDBpNamespace)
-
-    Some(new JsonNode(page, document))
+  private def getJacksonDocument(page: WikiPage, jsonString: String): Option[JsonNode] = {
+    val mapper = new ObjectMapper()
+    val jacksonDocument = mapper.readValue(jsonString, classOf[JacksonTermedStatementDocument])
+    jacksonDocument.setSiteIri(WikidataUtil.wikidataDBpNamespace)
+    Some(new JsonNode(page, jacksonDocument))
   }
 
   private def fixBrokenJson(jsonString: String): String = {

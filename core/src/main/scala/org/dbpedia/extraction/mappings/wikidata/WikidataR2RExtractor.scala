@@ -85,9 +85,8 @@ class WikidataR2RExtractor(
     // This array will hold all the triples we will extract
     val quads = new ArrayBuffer[Quad]()
 
-    if (page.wikiPage.title.namespace != Namespace.WikidataProperty && page.wikiPage.title.namespace != Namespace.WikidataLexeme) {
-      val document = page.wikiDataDocument.deserializeItemDocument(page.wikiPage.source)
-      for (statementGroup <- document.getStatementGroups) {
+    if (page.wikiPage.title.namespace != Namespace.WikidataProperty) {
+      for ((statementGroup) <- page.wikiDataDocument.getStatementGroups) {
         val duplicateList = getDuplicates(statementGroup)
         val statements = checkRank(statementGroup)
         statements.foreach {

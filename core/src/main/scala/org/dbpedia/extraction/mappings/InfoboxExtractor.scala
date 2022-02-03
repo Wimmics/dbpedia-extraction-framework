@@ -132,17 +132,12 @@ extends PageNodeExtractor
                     val cleanedPropertyNode = NodeUtil.removeParentheses(property)
 
                     val splitPropertyNodes = NodeUtil.splitPropertyNode(cleanedPropertyNode, splitPropertyNodeRegexInfobox)
-
-                    //for(splitNode <- splitPropertyNodes; pr <- extractValue(splitNode); if pr.unit.nonEmpty)
-                    //sh: removed pr.unit.nonEmpty as it kicked out all objectproperty triples from wikilinks,
-                    // didn't test for further side-effects seems to work
-                    for(splitNode <- splitPropertyNodes; pr <- extractValue(splitNode))
+                    for(splitNode <- splitPropertyNodes; pr <- extractValue(splitNode); if pr.unit.nonEmpty)
                     {
                         val propertyUri = getPropertyUri(property.key)
                         try
                         {
-                            //sh: pr.unit should be empty (null) for objects
-                            quads += new Quad(language, DBpediaDatasets.InfoboxProperties, subjectUri, propertyUri, pr.value, splitNode.sourceIri, pr.unit.getOrElse(null))
+                            quads += new Quad(language, DBpediaDatasets.InfoboxProperties, subjectUri, propertyUri, pr.value, splitNode.sourceIri, pr.unit.get)
 
                             if (InfoboxExtractorConfig.extractTemplateStatistics) 
                             {
@@ -190,7 +185,7 @@ extends PageNodeExtractor
         extractRankNumber(node).foreach(result => return List(result))
         extractLinks(node) match
         {
-            case links if links.nonEmpty => { return links}
+            case links if links.nonEmpty => return links
             case _ =>
         }
         StringParser.parse(node).map(value => ParseResult(value.value, None, Some(rdfLangStrDt))).toList

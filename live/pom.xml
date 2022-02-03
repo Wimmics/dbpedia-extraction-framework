@@ -79,13 +79,14 @@
         </plugins>
     </build>
 
-    <repositories>
+      <repositories>
         <repository>
-            <id>keytwo.net</id>
-            <name>Keytwo.net Repository</name>
-            <url>http://audiobox.keytwo.net</url>
+            <id>jitpack.io</id>
+            <name>Jitpack Repository</name>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
+
 
     <dependencies>
 
@@ -94,11 +95,12 @@
             <artifactId>core</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.socket</groupId>
-            <artifactId>socket.io-client</artifactId>
-            <version>0.2.1</version>
+       <dependency>
+            <groupId>com.github.datalogism</groupId>
+            <artifactId>socket.io-java-client</artifactId>
+            <version>socket.io-client-0.2.1</version>
         </dependency>
+
 
         <dependency>
             <groupId>xalan</groupId>
@@ -155,7 +157,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.26</version>
+            <version>8.0.24</version>
         </dependency>
 
         <dependency>
@@ -173,11 +175,17 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-xml</artifactId>
         </dependency>
+  <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.8</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_2.11</artifactId>
-            <version>2.5.2</version>
+            <version>2.9.8</version>
         </dependency>
 
         <dependency>
@@ -213,3 +221,4 @@
     </dependencies>
 
 </project>
+

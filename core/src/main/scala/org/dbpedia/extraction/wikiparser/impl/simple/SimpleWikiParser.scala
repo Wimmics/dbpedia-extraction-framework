@@ -62,9 +62,7 @@ object SimpleWikiParser
       // - generating the XML dump files takes several days, and the wikitext is obviously not generated at the
       //   same time as the redirect target, so sometimes they do not match.
       // In a nutshell: if the redirect in WikiPage is different from what we find, we're probably correct.
-
-      val pattern = if (lang.wikiCode=="wikidata") Redirect(lang).mkString("|")
-        else """(?is)\s*(?:""" + Redirect(lang).mkString("|") + """)\s*:?\s*\[\[.*"""
+      val pattern = """(?is)\s*(?:""" + Redirect(lang).mkString("|") + """)\s*:?\s*\[\[.*"""
       pattern.r
     }
 

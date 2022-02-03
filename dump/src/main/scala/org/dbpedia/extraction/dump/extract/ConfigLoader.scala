@@ -49,8 +49,7 @@ class ConfigLoader(config: Config)
     extractionRecorder.get(classTag[T]) match{
       case Some(s) => s.get(lang) match {
         case None =>
-          val datasetsParam = if (dataset == null) ListBuffer[Dataset]() else ListBuffer(dataset)
-          s(lang) = config.getDefaultExtractionRecorder[T](lang, 2000, null, null, datasetsParam, extractionMonitor)
+          s(lang) = config.getDefaultExtractionRecorder[T](lang, 2000, null, null,  ListBuffer(dataset), extractionMonitor)
           s(lang).asInstanceOf[ExtractionRecorder[T]]
         case Some(er) =>
           if(dataset != null) if(!er.datasets.contains(dataset)) er.datasets += dataset
@@ -403,7 +402,7 @@ class ConfigLoader(config: Config)
     XMLSource.fromReaders(articlesReaders, language,
       title => title.namespace == Namespace.Main || title.namespace == Namespace.File ||
         title.namespace == Namespace.Category || title.namespace == Namespace.Template ||
-        title.namespace == Namespace.WikidataProperty || title.namespace == Namespace.WikidataLexeme || ExtractorUtils.titleContainsCommonsMetadata(title))
+        title.namespace == Namespace.WikidataProperty || ExtractorUtils.titleContainsCommonsMetadata(title))
   }
 
   private def latestDate(finder: Finder[_]): String = {

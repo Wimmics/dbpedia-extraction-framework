@@ -1,9 +1,12 @@
 package org.dbpedia.extraction.destinations
 
-import org.dbpedia.extraction.live.helper.{ExtractorStatus, ExtractorSpecification}
 import org.dbpedia.extraction.transform.Quad
+
 import scala.collection.Seq
 import java.util.Map
+
+import org.dbpedia.extraction.live.config.extractors.{ExtractorSpecification, ExtractorStatus}
+
 import collection.mutable.ArrayBuffer
 
 /**
@@ -27,7 +30,7 @@ class ExtractorRestrictDestination(extractorSpecs: Map[String, ExtractorSpecific
 
     for (quad <- graphAdd) {
       if (spec != null && !spec.accept(quad)) deleted += quad.copy()
-      else if (spec.status == ExtractorStatus.KEEP) unmodified += quad.copy()
+      else if (spec != null && spec.status == ExtractorStatus.KEEP) unmodified += quad.copy()
       else added += quad.copy()
     }
 

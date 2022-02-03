@@ -232,7 +232,7 @@ abstract class HtmlNifExtractor(nifContextIri: String, language: String, nifPara
       triples += rawTables(tableUri, RdfNamespace.NIF.append("beginIndex"), position.toString, sourceUrl, RdfNamespace.XSD.append("nonNegativeInteger"))
       triples += rawTables(tableUri, RdfNamespace.NIF.append("endIndex"), position.toString, sourceUrl, RdfNamespace.XSD.append("nonNegativeInteger"))
       triples += rawTables(tableUri, RdfNamespace.HTML.append("class"), table.getOuterClass, sourceUrl, RdfNamespace.XSD.append("string"))
-      triples += rawTables(tableUri, RdfNamespace.DC.append("source"), table.getHtml, sourceUrl, RdfNamespace.RDF.append("HTML"))
+      triples += rawTables(tableUri, RdfNamespace.DC.append("source"), table.getHtml, sourceUrl, RdfNamespace.RDF.append("XMLLiteral"))
     }
     triples
   }
@@ -248,7 +248,7 @@ abstract class HtmlNifExtractor(nifContextIri: String, language: String, nifPara
       triples += equations(equUri, RdfNamespace.NIF.append("referenceContext"), contextUri, sourceUrl, null)
       triples += equations(equUri, RdfNamespace.NIF.append("beginIndex"), position.toString, sourceUrl, RdfNamespace.XSD.append("nonNegativeInteger"))
       triples += equations(equUri, RdfNamespace.NIF.append("endIndex"), position.toString, sourceUrl, RdfNamespace.XSD.append("nonNegativeInteger"))
-      triples += equations(equUri, RdfNamespace.DC.append("source"), equ.getHtml, sourceUrl, RdfNamespace.RDF.append("HTML"))
+      triples += equations(equUri, RdfNamespace.DC.append("source"), equ.getHtml, sourceUrl, RdfNamespace.RDF.append("XMLLiteral"))
     }
     triples
   }
@@ -430,13 +430,11 @@ abstract class HtmlNifExtractor(nifContextIri: String, language: String, nifPara
     doc
   }
 
-  protected def getNifIri(nifClass: String, beginIndex: Int, endIndex: Int): String = {
-    val split = nifContextIri.split("\\?")
-    val query = split(1)
-    UriUtils.createURI(split(0)) match {
+  protected def getNifIri(nifClass: String, beginIndex: Int, endIndex: Int): String ={
+    UriUtils.createURI(nifContextIri) match{
       case Success(uri) =>
         var iri = uri.getScheme + "://" + uri.getHost + (if(uri.getPort > 0) ":" + uri.getPort else "") + uri.getPath + "?"
-        val m = query.split("&").map(_.trim).collect{ case x if !x.startsWith("nif=") => x}
+          val m = uri.getQuery.split("&").map(_.trim).collect{ case x if !x.startsWith("nif=") => x}
         iri += m.foldRight("")(_+"&"+_) + "nif=" + nifClass + "&char=" + beginIndex + "," + endIndex
         iri.replace("?&", "?")
       case Failure(f) => throw f

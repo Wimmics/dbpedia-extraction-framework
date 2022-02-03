@@ -61,27 +61,6 @@ object DurationParserConfig
           "أعوام" -> "year",
           "حول" -> "year"
         ),
-        "cs" -> Map(
-            "s" -> "second",
-            "sekunda" -> "second",
-            "sekundy" -> "second",
-            "vteřina" -> "second",
-            "vteřiny" -> "second",
-            "m" -> "minute",
-            "minuta" -> "minute",
-            "minuty" -> "minute",
-            "h" -> "hour",
-            "hodina" -> "hour",
-            "hodiny" -> "hour",
-            "d" -> "day",
-            "den" -> "day",
-            "dny" -> "day",
-            "měsíc" -> "month",
-            "měsíce" -> "month",
-            "rok" -> "year",
-            "roky" -> "year",
-            "y" -> "year"
-        ),
         "de" -> Map(
             "Sekunde" -> "second",
             "Sekunden" -> "second",
@@ -233,20 +212,6 @@ object DurationParserConfig
             "ano" -> "year",
             "anos" -> "year"
         ),
-        "mk" -> Map(
-            "секунда" -> "second",
-            "секунди" -> "second",
-            "минута" -> "minute",
-            "минути" -> "minute",
-            "саат" -> "hour",
-            "саати" -> "hour",
-            "ден" -> "day",
-            "денови" -> "day",
-            "месец" -> "month",
-            "месеци" -> "month",
-            "година" -> "year",
-            "години" -> "year"
-        ),
         "nl" -> Map(
             "Seconde" -> "second",
             "Seconden" -> "second",
@@ -288,16 +253,10 @@ object DurationParserConfig
             "segundos" -> "second",
             "seg" -> "second",
             "segs" -> "second",
-            "s" -> "second",
             "minuto" -> "minute",
             "minutos" -> "minute",
-            "min" -> "minute",
-            "m" -> "minute",
             "hora" -> "hour",
             "horas" -> "hour",
-            "hrs" -> "hour",
-            "hr" -> "hour",
-            "h" -> "hour",
             "dia" -> "day",
             "dias" -> "day",
             "mes" -> "month",
@@ -305,7 +264,7 @@ object DurationParserConfig
             "mês" -> "month",
             "ano" -> "year",
             "anos" -> "year",
-            "año" -> "year", // TODO remove "año" and "anõs". This is "es" not "pt"
+            "año" -> "year",
             "años" -> "year"
         ),
         "es" -> Map(

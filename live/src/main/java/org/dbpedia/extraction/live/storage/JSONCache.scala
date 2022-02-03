@@ -4,21 +4,21 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.apache.log4j.Logger
 import org.dbpedia.extraction.destinations._
 import org.dbpedia.extraction.destinations.formatters.UriPolicy._
-import org.dbpedia.extraction.live.core.LiveOptions
 import org.dbpedia.extraction.transform.Quad
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, HashMap, ListBuffer}
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.dbpedia.extraction.live.config.LiveOptions
+import org.dbpedia.extraction.live.queue.LiveQueueItem
 
 /**
  * This class retrieves the stored cache for a resource extraction.
  * The cache is per extractor together with a hash string for faster compare
  */
 
-class JSONCache(pageID: Long, pageTitle: String) {
+class JSONCache(wikiLanguage: String, pageID: Long, pageTitle: String) {
   private val logger = Logger.getLogger(classOf[JSONCache].getName)
 
   var extractorHash = new HashMap[String, String]
@@ -28,10 +28,12 @@ class JSONCache(pageID: Long, pageTitle: String) {
   var cacheObj : JSONCacheItem = null
   var cacheExists = false
 
+  var jsonCacheUpdateNthEdit = 5
+
   initCache
 
   def performCleanUpdate() : Boolean = {
-    return cacheObj != null && cacheObj.updatedTimes >=5
+    return cacheObj != null && cacheObj.updatedTimes >= jsonCacheUpdateNthEdit
   }
 
   def getHashForExtractor(extractor: String): String = {
@@ -39,6 +41,7 @@ class JSONCache(pageID: Long, pageTitle: String) {
   }
 
   def getTriplesForExtractor(extractor: String): Seq[Quad] = {
+    //TODO remove duplication (getTriplesFromJSON)
     val list: List[Any] = extractorTriples.getOrElse(extractor, List())
     if (list.isEmpty)
       return Seq()
@@ -57,7 +60,8 @@ class JSONCache(pageID: Long, pageTitle: String) {
           val objLsit = vp.asInstanceOf[List[Map[String,String]]]
           for (obj <- objLsit) {
             val objType: String = obj.getOrElse("type","")
-            val objLang: String = obj.getOrElse("lang", JSONCache.defaultLanguage)
+            val objLang: String = obj.getOrElse("lang", "fr")
+            //val objLang: String = obj.getOrElse("lang", "en")
             val objDatatype: String = if (objType.equals("uri"))  null
                                       else obj.getOrElse("datatype", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")
 
@@ -65,7 +69,7 @@ class JSONCache(pageID: Long, pageTitle: String) {
             // unescape if URI
             val finalValue = if (objDatatype == null) org.apache.commons.lang.StringEscapeUtils.unescapeJava(objValue) else objValue
 
-            quads += new Quad(objLang ,"",subject, predicate, objValue, "", objDatatype)
+            quads += new Quad(objLang ,"",subject, predicate, objValue, "", objDatatype) //TODO make sure this makes sense
 
           }
         }
@@ -92,10 +96,11 @@ class JSONCache(pageID: Long, pageTitle: String) {
   }
 
   def updateCache(json: String, subjectsSet: java.util.Set[String], diff: String, isModified: Boolean): Boolean = {
+
     val updatedTimes = if ( cacheObj == null || performCleanUpdate()) "0" else (cacheObj.updatedTimes + 1).toString
 
     if ( ! isModified) {
-      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdateUnmodified, Array[String](updatedTimes, "" + this.pageID))
+      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdateUnmodified, Array[String](updatedTimes, this.wikiLanguage, "" + this.pageID))
     }
     
     // On clean Update do not reuse existing subjects
@@ -111,15 +116,17 @@ class JSONCache(pageID: Long, pageTitle: String) {
     val escaped_json = org.apache.commons.lang.StringEscapeUtils.escapeJava(json)
     // Check wheather to update oΑr insert
     if (cacheExists) {
-      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdate, Array[String](this.pageTitle, updatedTimes,  escaped_json, subjects.toString, diff,  "" + this.pageID))
+      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdate, Array[String](
+        this.pageTitle, updatedTimes,  escaped_json, subjects.toString, diff, this.wikiLanguage, "" + this.pageID))
     }
     else
-      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheInsert, Array[String]("" + this.pageID, this.pageTitle, updatedTimes,  escaped_json, subjects.toString, diff))
+      return JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheInsert, Array[String](
+        this.wikiLanguage, "" + this.pageID, this.pageTitle, updatedTimes,  escaped_json, subjects.toString, diff))
   }
 
   private def initCache {
     try {
-      cacheObj = JDBCUtil.getCacheContent(DBpediaSQLQueries.getJSONCacheSelect, this.pageID)
+      cacheObj = JDBCUtil.getCacheContent(DBpediaSQLQueries.getJSONCacheSelect, this.wikiLanguage, this.pageID)
       if (cacheObj == null) return
       cacheExists = true
       if (cacheObj.escaped_json.trim.isEmpty) return
@@ -150,20 +157,19 @@ class JSONCache(pageID: Long, pageTitle: String) {
 
 object JSONCache {
 
-  val defaultLanguage = LiveOptions.language
   val mapper = new ObjectMapper() with ScalaObjectMapper
   JSONCache.mapper.registerModule(DefaultScalaModule)
 
-  def setErrorOnCache(pageID: Long, error: Int) {
-    JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdateError, Array[String]("" + error, "" + pageID))
+  def setErrorOnCache(item: LiveQueueItem, error: Int) {
+    JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheUpdateError, Array[String]("" + error, "" + item.getWikiLanguage.wikiCode, "" + item.getItemID))
   }
 
-  def deleteCacheItem(pageID: Long, policies: Array[Policy] = null) {
-    val cache = new JSONCache(pageID, "")
+  def deleteCacheItem(item: LiveQueueItem, policies: Array[Policy] = null) {
+    val cache = new JSONCache(item.getWikiLanguage.wikiCode, item.getItemID, "")
     val triples = cache.getAllHashedTriples()
 
     var destList = new ArrayBuffer[LiveDestination]()
-    destList += new PublisherDiffDestination(pageID, true, if (cache.cacheObj != null) cache.cacheObj.subjects else new java.util.HashSet[String]()) //  unpublish in changesetes
+    destList += new PublisherDiffDestination(item.getItemID, true, if (cache.cacheObj != null) cache.cacheObj.subjects else new java.util.HashSet[String]()) //  unpublish in changesetes
     val compositeDest: LiveDestination = new CompositeLiveDestination(destList.toSeq: _*) // holds all main destinations
 
 
@@ -171,11 +177,11 @@ object JSONCache {
     compositeDest.write("dummy extractor","dummy hash", Seq(), triples, Seq())
     compositeDest.close
 
-    deleteCacheOnlyItem(pageID)
+    deleteCacheOnlyItem(item.getWikiLanguage.wikiCode, item.getItemID)
   }
 
-  def deleteCacheOnlyItem(pageID: Long) {
-    JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheDelete, Array[String]("" + pageID))
+  def deleteCacheOnlyItem(wikiLanguage: String, pageID: Long) {
+    JDBCUtil.execPrepared(DBpediaSQLQueries.getJSONCacheDelete, Array[String](wikiLanguage, "" + pageID))
   }
 
   def getTriplesFromJson(jsonString: String) : Traversable[Quad] = {
@@ -208,12 +214,13 @@ object JSONCache {
                     for (obj <- objLsit) {
                       val objValue: String = obj.getOrElse("value", "")
                       val objType: String = obj.getOrElse("type", "")
-                      val objLang: String = obj.getOrElse("lang", defaultLanguage)
+                      //val objLang: String = obj.getOrElse("lang", "en") //TODO make sure this makes sense
+                      val objLang: String = obj.getOrElse("lang", "fr") //TODO make sure this makes sense
                       val objDatatype: String = if (objType.equals("uri"))  null
                                                 else obj.getOrElse("datatype", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")
 
 
-                      quads += new Quad(objLang , "", subject, predicate, objValue, "", objDatatype)
+                      quads += new Quad( objLang , "", subject, predicate, objValue, "", objDatatype)
 
                     }
                 }
@@ -226,6 +233,6 @@ object JSONCache {
   }
 }
 
-class JSONCacheItem(val pageID: Long, val updatedTimes: Int, val escaped_json: String, val subjects: java.util.Set[String]) {
+class JSONCacheItem(val wikiLanguage: String, val pageID: Long, val updatedTimes: Int, val escaped_json: String, val subjects: java.util.Set[String]) {
 
 }

@@ -7,8 +7,8 @@ import java.util.concurrent._
 
 import org.dbpedia.extraction.destinations._
 import org.dbpedia.extraction.destinations.formatters.{TerseFormatter, UriPolicy}
-import org.dbpedia.extraction.live.core.LiveOptions
-import org.dbpedia.extraction.live.storage.{JDBCUtil, JSONCache, DBpediaSQLQueries, JDBCPoolConnection}
+import org.dbpedia.extraction.live.config.LiveOptions
+import org.dbpedia.extraction.live.storage.{DBpediaSQLQueries, JDBCPoolConnection, JDBCUtil, JSONCache}
 import org.dbpedia.extraction.util.RichFile._
 import org.dbpedia.extraction.util.{IOUtils, ProxyAuthenticator}
 import org.slf4j.{Logger, LoggerFactory}
@@ -19,6 +19,7 @@ import org.slf4j.{Logger, LoggerFactory}
  *
  * @author Dimitris Kontokostas
  * @since 9/18/14 4:33 PM
+  *        TODO: support multilanguage
  */
 class DumpExport(val filename: String, val threads: Integer) {
   val logger: Logger = LoggerFactory.getLogger(classOf[DumpExport])
@@ -26,6 +27,8 @@ class DumpExport(val filename: String, val threads: Integer) {
   val policies = {
     UriPolicy.parsePolicy(LiveOptions.options.get("uri-policy.main"))
   }
+
+  val wikiLanguages = LiveOptions.languages
 
   val destination: Destination = new WriterDestination(writer(new File(filename)), new TerseFormatter(false, true, policies))
 

@@ -59,20 +59,12 @@ class WikiPage(
 
   override def toString: String = "WikiPage(" + title + "," + id + "," + revision + "," + contributorID + "," + contributorName + "," + source + "," + format + ")"
 
-  lazy val sourceIri = title.pageIri + "?" + (if (revision >= 0) "oldid=" + revision + "&" else "") + "ns=" + title.namespace.code
-
-  /*private var _sourceIri: String = _
-
+  private var _sourceIri: String = _
   def sourceIri : String = {
-
-    if(_sourceIri == null) {
-      _sourceIri =
-        title.pageIri + "?" + (if (revision >= 0) "oldid=" + revision + "&" else "") + "ns=" + title.namespace.code
-      println("inner"+_sourceIri)
-    }
-    println("outer"+_sourceIri)
+    if(_sourceIri == null)
+      _sourceIri = title.pageIri + "?" + (if (revision >= 0) "oldid=" + revision + "&" else "") + "ns=" + title.namespace.code
     _sourceIri
-  }*/
+  }
 
   //Generate the page URI
   def uri: String = this.title.language.resourceUri.append(this.title.decodedWithNamespace)

@@ -25,13 +25,11 @@ object DisambiguationExtractorConfig
          "it" -> " (disambigua)",
          "ja" -> " (曖昧さ回避)",
          "ko" -> " (동음이의)",
-         "mk" -> " (појаснување)",
          "nl" -> " (doorverwijspagina)", //TODO make it Set() for multiple “nl” -> " (disambigueren)"
          "pl" -> " (ujednoznacznienie)",
          "pt" -> " (desambiguação)",
          "ru" -> " (значения)",
          "sk" -> " (Rozlišovacia stránka)",
-         "sr" -> " (Višeznačna odrednica)",  //TODO make it a Set() for multiple “sr” -> " (вишезначна одредница)"
-         "uk" -> " (значення)"
+         "sr" -> " (Višeznačna odrednica)"  //TODO make it a Set() for multiple “sr” -> " (вишезначна одредница)"
     )
 }

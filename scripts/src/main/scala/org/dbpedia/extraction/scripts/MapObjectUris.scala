@@ -79,9 +79,8 @@ object MapObjectUris {
         /*3*/ "comma-separated names of input datasets (e.g. 'infobox-properties,mappingbased-properties'), " +
         /*4*/ "output dataset name extension (e.g. '-redirected'), " +
         /*5*/ "comma-separated input/output file suffixes (e.g. '.nt.gz,.nq.bz2', '.ttl', '.ttl.bz2'), " +
-        /*6*/ "languages or article count ranges (e.g. @downloaded, or 'en,fr' or '10000-') or " +
-              "choose '@external' to map external datasets from a secondary directory (see last argument)" +
-        /*7*/ "(optional) secondary directory (containing the input datasets to map if language option is '@external')")
+        /*6*/ "languages or article count ranges (e.g. 'en,fr' or '10000-') or choose '@external' to map external datasets from a secondary directory (see last argument)" +
+        /*7*/ "optional secondary directory (containing the input datasets to map if language option is '@external')")
 
     val baseDir = new File(args(0))
 
@@ -145,11 +144,7 @@ object MapObjectUris {
         val inputFile = if(isExternal) new File(secondary, input._1 + input._2) else finder.byName(input._1 + input._2, auto = true).get
         val outputFile = if(isExternal) new File(secondary, input._1 + extension + input._2) else finder.byName(input._1 + extension + input._2, auto = true).get
         new QuadMapper().mapQuads(language, inputFile, outputFile) { quad =>
-
-          if (quad.datatype != null) {
-            // just copy quad with literal values. TODO: make this configurable
-            List(quad)
-          }
+          if (quad.datatype != null) List(quad) // just copy quad with literal values. TODO: make this configurable
           else {
             val uris = map.get(quad.value).asScala
             count = count + 1
@@ -157,7 +152,6 @@ object MapObjectUris {
               yield quad.copy(
                 value = uri, // change object URI
                 context = if (quad.context == null) quad.context else quad.context + "&objectMappedFrom=" + quad.value) // add change provenance
-            // none found
             if(ret.isEmpty)
               List(quad)
             else

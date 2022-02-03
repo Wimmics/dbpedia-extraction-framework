@@ -2,8 +2,9 @@ package org.dbpedia.extraction.live.storage;
 
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
+import com.jolbox.bonecp.Statistics;
 import org.slf4j.Logger;
-import org.dbpedia.extraction.live.core.LiveOptions;
+import org.dbpedia.extraction.live.config.LiveOptions;
 import org.dbpedia.extraction.live.main.Main;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,14 @@ public class JDBCPoolConnection {
             config.setJdbcUrl(LiveOptions.options.get("cache.dsn"));
             config.setUsername(LiveOptions.options.get("cache.user"));
             config.setPassword(LiveOptions.options.get("cache.pw"));
+
+            // Some magic numbers
+            config.setMinConnectionsPerPartition(4);
+            config.setMaxConnectionsPerPartition(32);
+
+            logger.info("JDBCPoolConfig: "+config.toString());
             connectionCachePool = new BoneCP(config); // setup the connection pool
+
         } catch (Exception e) {
             logger.error(e.getMessage());
             logger.error("Could not initialize DB connection! Exiting...");
@@ -58,6 +66,10 @@ public class JDBCPoolConnection {
             }
         }
 
+    }
+
+    public static Statistics getStats(){
+        return connectionCachePool.getStatistics();
     }
 
 

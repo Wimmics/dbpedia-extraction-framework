@@ -28,7 +28,11 @@ class TopicalConceptsExtractor(
 )
 extends PageNodeExtractor
 {
-    private val mainArticleForCategory = context.ontology.properties("mainArticleForCategory")
+    private val skosSubjectProperty = context.ontology.properties("dct:subject")
+
+    private val rdfTypeProperty = context.ontology.properties("rdf:type")
+
+    private val skosSubjectClass = context.ontology.classes("skos:Concept")
 
     private val catMainTemplates = TopicalConceptsExtractorConfig.catMainTemplates;
 
@@ -49,8 +53,14 @@ extends PageNodeExtractor
                     (new Quad(context.language,
                         DBpediaDatasets.TopicalConcepts,
                         subjectUri,
-                        mainArticleForCategory,
+                        skosSubjectProperty,
                         mainResource,
+                        template.sourceIri) ::
+                    new Quad(context.language,
+                        DBpediaDatasets.TopicalConcepts,
+                        mainResource,
+                        rdfTypeProperty,
+                        skosSubjectClass.uri,
                         template.sourceIri)
                     :: Nil)
                 }

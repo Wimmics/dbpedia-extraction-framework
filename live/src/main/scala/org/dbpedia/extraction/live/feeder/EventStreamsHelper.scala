@@ -12,19 +12,22 @@ import akka.stream.scaladsl._
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import org.dbpedia.extraction.live.core.LiveOptions
+import org.dbpedia.extraction.live.config.LiveOptions
 import org.dbpedia.extraction.live.queue.LiveQueueItem
 import org.dbpedia.extraction.live.util.DateUtil
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
-  * This class is used in order to consume the Wikimedia EventStreamsAPI that replaced the RCStream API during spring of 2018.
+  * This class is used in order to consume the Wikimedia EventStreamsAPI
+  * that replaced the RCStream API during spring of 2018.
   * EventStreams follows the Server Sent Event (SSE) protocol.
   * Akka SSE offers the implementation of a SSE Client used here.
   * Akka Streams is used in order to process the stream data.
-  * Processing means filtering by configured language and namespaces, and use the wiki page title and timestamp in order to create LiveQueueItems.
+  * Processing means filtering by configured language and namespaces, and use
+  * the wiki page title and timestamp in order to create LiveQueueItems.
   *
   * Documentation on the EventStreams API can be found here: https://wikitech.wikimedia.org/wiki/EventStreams
   * EventStreams is available here: https://stream.wikimedia.org/v2/stream/recentchange
@@ -35,14 +38,14 @@ import scala.concurrent.duration._
   */
 
 
-class EventStreamsHelper () extends  EventStreamUnmarshalling {
+class EventStreamsHelper(val since: String) extends EventStreamUnmarshalling {
 
   private val logger = LoggerFactory.getLogger("EventStreamsHelper")
 
   private val baseURL = LiveOptions.options.get("feeder.eventstreams.baseURL")
   private val stream = LiveOptions.options.get("feeder.eventstreams.streams").split("\\s*,\\s*").toList
-  private val allowedNamespaces  = LiveOptions.options.get("feeder.eventstreams.allowedNamespaces").split("\\s*,\\s*").toList.map((s:String )=> s.toInt)
-  private val wikilanguage = LiveOptions.options.get("language")
+  private val allowedNamespaces: List[Int] = LiveOptions.options.get("feeder.eventstreams.allowedNamespaces").split("\\s*,\\s*").toList.map((s: String) => s.toInt)
+  private val wikilanguages = LiveOptions.languages
   private val minBackoffFactor = LiveOptions.options.get("feeder.eventstreams.minBackoffFactor").toInt.second
   private val maxBackoffFactor = LiveOptions.options.get("feeder.eventstreams.maxBackoffFactor").toInt.second
 
@@ -52,6 +55,7 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
   // maxLineSize and maxEventSize belong to the trait EventStreamUnmarshalling
   // and the defaults of  4096 and  8192 respectively are to small for us
   override protected def maxLineSize: Int = LiveOptions.options.get("feeder.eventstreams.maxLineSize").toInt
+
   override protected def maxEventSize: Int = LiveOptions.options.get("feeder.eventstreams.maxEventSize").toInt
 
   /**
@@ -67,24 +71,34 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
     import system.dispatcher
 
     val flowData: Flow[ServerSentEvent, String, NotUsed] = Flow.fromFunction(_.getData())
+
     val flowLiveQueueItem: Flow[String, LiveQueueItem, NotUsed] = Flow.fromFunction(eventData =>
       new LiveQueueItem(
+        //language
+        parseStringFromJson(eventData, "wiki").replace("wiki", ""), //TODO implement multilanguage
+        //itemID
         -1,
+        //Title
         parseStringFromJson(eventData, "title"),
-        DateUtil.transformToUTC(parseIntFromJson(eventData, "timestamp")),
+        //timestamp
+        DateUtil.transformUnixTimestampToUTC(parseIntFromJson(eventData, "timestamp")),
+        //deleted
         false,
+        //xml
         ""))
+
     val sinkAddToQueue: Sink[LiveQueueItem, Future[Done]] =
-      Sink.foreach[LiveQueueItem](EventStreamsFeeder.addQueueItemCollection(_))
+      Sink.foreach[LiveQueueItem](EventStreamsFeeder.addQueueItemToBuffer(_))
 
 
-    val sseSource = RestartSource.onFailuresWithBackoff(
+    val sseSource: Source[ServerSentEvent, NotUsed] = RestartSource.onFailuresWithBackoff(
       minBackoff = minBackoffFactor,
       maxBackoff = maxBackoffFactor,
       randomFactor = 0.2
     ) { () =>
       Source.fromFutureSource {
         Http().singleRequest(
+          //HttpRequest(uri = baseURL + stream.head + "?since=" + since))
           HttpRequest(uri = baseURL + stream.head))
           .flatMap(event => Unmarshal(event).to[Source[ServerSentEvent, NotUsed]])
       }
@@ -101,6 +115,7 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
   /**
     * Takes a JSON String and returns true, if namespace and language matches, false otherwise
     * See the schema of the JSON at https://github.com/wikimedia/mediawiki-event-schemas/blob/master/jsonschema/mediawiki/recentchange/2.yaml
+    *
     * @param data a JSON String
     * @return boolean: match the configured namespace and language
     */
@@ -109,9 +124,12 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
 
     //the EventStreams API uses the postfix "wiki" for the language, e.g. "enwiki" for languag "en"
     val namespace = parseIntFromJson(data, "namespace")
-    val language = parseStringFromJson(data, "wiki")
+    val language = parseStringFromJson(data, "wiki").replace("wiki", "")
+    val timestamp: Int = parseIntFromJson(data, "timestamp")
 
-    for(nspc <- allowedNamespaces){
+    allowedNamespaces.contains(namespace) && (timestamp != -1) && wikilanguages.contains(language)
+
+    /*for(nspc <- allowedNamespaces){
       if (nspc == namespace ){
         keep = true
       }
@@ -119,10 +137,10 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
     if (parseIntFromJson(data, "timestamp") == -1){
       keep = false
     }
-    keep && language == wikilanguage + "wiki"
+    keep && wikilanguages.contains(language)*/
   }
 
-  
+
   def parseStringFromJson(data: String, key: String): String = {
     mapper.readValue(data, classOf[Map[String, String]]).getOrElse(key, "")
   }
@@ -130,8 +148,8 @@ class EventStreamsHelper () extends  EventStreamUnmarshalling {
   def parseIntFromJson(data: String, key: String): Int = {
     mapper.readValue(data, classOf[Map[String, Int]]).getOrElse(key, -1)
   }
-  
+
 }
 
-
+//println("eventstreamshelper: wikilanguages:  " + wikilanguages.toString + ", language: " + language)
 

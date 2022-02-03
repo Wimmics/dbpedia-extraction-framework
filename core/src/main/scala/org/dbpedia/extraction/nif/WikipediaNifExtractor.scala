@@ -4,7 +4,6 @@ import org.dbpedia.extraction.config.Config
 import org.dbpedia.extraction.config.provenance.DBpediaDatasets
 import org.dbpedia.extraction.ontology.{Ontology, OntologyProperty, RdfNamespace}
 import org.dbpedia.extraction.transform.{Quad, QuadBuilder}
-import org.dbpedia.extraction.util.abstracts.AbstractUtils
 import org.dbpedia.extraction.util.{Language, RecordEntry, RecordSeverity}
 import org.dbpedia.extraction.wikiparser.{Namespace, WikiPage}
 import org.dbpedia.extraction.wikiparser.impl.wikipedia.Namespaces
@@ -48,8 +47,6 @@ class WikipediaNifExtractor(
   protected val recordAbstracts: Boolean = !context.configFile.nifParameters.isTestRun  //not! will create dbpedia short and long abstracts
   protected val shortAbstractLength: Int = context.configFile.abstractParameters.shortAbstractMinLength
   protected val abstractsOnly: Boolean = context.configFile.nifParameters.abstractsOnly
-  protected val removeBrokenBrackets: Boolean = context.configFile.nifParameters.removeBrokenBracketsProperty
-
   override protected val templateString: String = Namespaces.names(context.language).get(Namespace.Template.code) match {
     case Some(x) => x
     case None => "Template"
@@ -70,15 +67,8 @@ class WikipediaNifExtractor(
     */
   override def extendSectionTriples(extractionResults: ExtractedSection, graphIri: String, subjectIri: String): Seq[Quad] = {
     //this is only dbpedia relevant: for singling out long and short abstracts
-
     if (recordAbstracts && extractionResults.section.id == "abstract" && extractionResults.getExtractedLength > 0) {
-      val (cleanLongAbstract, cleanShortAbstract) = if (removeBrokenBrackets) {
-        (AbstractUtils.removeBrokenBracketsInAbstracts(extractionResults.getExtractedText),
-          AbstractUtils.removeBrokenBracketsInAbstracts(getShortAbstract(extractionResults)))
-      } else {
-        (extractionResults.getExtractedText, getShortAbstract(extractionResults))
-      }
-      List(longQuad(subjectIri, cleanLongAbstract, graphIri), shortQuad(subjectIri, cleanShortAbstract, graphIri))
+      List(longQuad(subjectIri, extractionResults.getExtractedText, graphIri), shortQuad(subjectIri, getShortAbstract(extractionResults), graphIri))
     }
     else
       List()
@@ -229,5 +219,4 @@ class WikipediaNifExtractor(
       test.addAll(doc.select(query))
     test.size() > 0
   }
-
 }

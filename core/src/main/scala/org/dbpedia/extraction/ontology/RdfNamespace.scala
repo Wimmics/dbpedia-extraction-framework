@@ -94,16 +94,6 @@ object RdfNamespace {
   //the following namespaces are required for supporting the entries in the mappings Wiki as of 2014-07-15
   val CIDOCCRM = ns("cidoccrm", "http://purl.org/NET/cidoc-crm/core#", false)
   val BIO = ns("bio", "http://purl.org/vocab/bio/0.1/", false)
-  
-  // doing the new global mappings
-  val CEO = ns("ceo","https://linkeddata.cultureelerfgoed.nl/vocab/def/ceo#",false)
-  val BAG = ns("bag","http://bag.basisregistraties.overheid.nl/def/bag#",false)
-  val DBLP2 = ns("dblp2","https://dblp.org/rdf/schema-2020-07-01#",false)
-  val bibschema = ns("bibschema","https://bib.schema.org/",false)
-  val GN = ns("gn","http://www.geonames.org/ontology#",false)
-  val MO = ns("mo","http://purl.org/ontology/mo/",false)
-  val GND = ns("gnd","https://d-nb.info/standards/elementset/gnd#",false)
-  val RKD = ns("rkd","http://data.rkd.nl/def#",false)
 
   /**
    * @return namespace for prefix and suffix, default namespace and full name if no match found 
