@@ -53,22 +53,16 @@ public class PageProcessor extends Thread{
         try{
             Boolean extracted = false;
             if (isTitle) {
-                
-//	        System.out.println("=> IS TITLE !!!!!!!!!!!!!!!!!!! 1");
-		extracted = LiveExtractionController.extractPageFromTitle(
+                extracted = LiveExtractionController.extractPageFromTitle(
                         item,
                         item.getWikiLanguage().apiUri(),
                         item.getWikiLanguage().wikiCode());
-//		System.out.println("=> IS TITLE !!!!!!!!!!!!!!!!!!! 2");
-	    } else {
-		    
-  //          	System.out.println("=> NO TITLE !!!!!!!!!!!!!!!!!!!!! 1");
+            } else {
                 extracted = LiveExtractionController.extractPage(
                         item,
                         item.getWikiLanguage().apiUri(),
                         item.getWikiLanguage().wikiCode()); //TODO pass only item
-    //        	System.out.println("=> NO TITLE !!!!!!!!!!!!!!!!!!!!! 2");
-	    }
+            }
 
             if (!extracted)
                 JSONCache.setErrorOnCache(item, -1);
@@ -81,8 +75,7 @@ public class PageProcessor extends Thread{
 
 
     public void run(){
-        //LiveQueueItem currentPage = new LiveQueueItem("en", 0,"");
-        LiveQueueItem currentPage = new LiveQueueItem("fr", 0,"");
+        LiveQueueItem currentPage = new LiveQueueItem("en", 0,"");
         LiveQueueItem lastPage = null;
         while(keepRunning){
             try{

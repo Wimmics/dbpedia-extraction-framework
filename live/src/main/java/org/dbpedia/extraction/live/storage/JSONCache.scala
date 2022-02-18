@@ -60,8 +60,7 @@ class JSONCache(wikiLanguage: String, pageID: Long, pageTitle: String) {
           val objLsit = vp.asInstanceOf[List[Map[String,String]]]
           for (obj <- objLsit) {
             val objType: String = obj.getOrElse("type","")
-            val objLang: String = obj.getOrElse("lang", "fr")
-            //val objLang: String = obj.getOrElse("lang", "en")
+            val objLang: String = obj.getOrElse("lang", "en")
             val objDatatype: String = if (objType.equals("uri"))  null
                                       else obj.getOrElse("datatype", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")
 
@@ -214,8 +213,7 @@ object JSONCache {
                     for (obj <- objLsit) {
                       val objValue: String = obj.getOrElse("value", "")
                       val objType: String = obj.getOrElse("type", "")
-                      //val objLang: String = obj.getOrElse("lang", "en") //TODO make sure this makes sense
-                      val objLang: String = obj.getOrElse("lang", "fr") //TODO make sure this makes sense
+                      val objLang: String = obj.getOrElse("lang", "en") //TODO make sure this makes sense
                       val objDatatype: String = if (objType.equals("uri"))  null
                                                 else obj.getOrElse("datatype", "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")
 

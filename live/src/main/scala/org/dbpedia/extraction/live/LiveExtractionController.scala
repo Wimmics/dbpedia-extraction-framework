@@ -65,7 +65,7 @@ object LiveExtractionController
     url = new URL(Language.Mappings.apiUri),
     language = Language.Mappings )).toMap
 
-  //println ("COMMONS SOURCE = " + LiveOptions.options.get("commonsDumpsPath"))
+  println ("COMMONS SOURCE = " + LiveOptions.options.get("commonsDumpsPath"))
 
   val commonsSource = null
 
@@ -113,27 +113,15 @@ object LiveExtractionController
 
   def extractPageFromTitle(item: LiveQueueItem, apiURL :String, landCode :String): Boolean =
   {
-    //Console.println("----")
-    //Console.println("API URL : "+apiURL)
-    //Console.println("landcode : "+ landCode)
-    //Console.println("----")
     val lang = Language.apply(landCode)
     val articlesSource : Source =
       if (item.getXML.isEmpty) {
-        //Console.println("EMPTY...................")
         logger.info{"WikiTitle.parse(item.getItemName, lang)"+WikiTitle.parse(item.getItemName, lang)+""}
-        
         WikiSource.fromTitles(List(WikiTitle.parse(item.getItemName, lang)), new URL(apiURL), lang)
       }
       else {
-        //Console.println("XMLSOURCE.............")
         XMLSource.fromOAIXML(XML.loadString(item.getXML))
       }
-
-     //Console.println("HEY we get it !")
-    //Console.println("--------------------")
-   // Console.println(articlesSource)
-   // Console.println("--------------------")   
     startExtraction(articlesSource,lang)
   }
 
@@ -145,7 +133,6 @@ object LiveExtractionController
    */
   def startExtraction(articlesSource : Source, language : Language):Boolean =
   {
-    
     // In case of single threading
     //Extractor
 
@@ -167,19 +154,17 @@ object LiveExtractionController
 
       if(namespaces.contains(wikiPage.title.namespace))
       {
-       // Console.println("xxxxxxxxxxxxxxxxxxxxxx")
-       // Console.println("ID page :"+wikiPage.id)
-        //Console.println("title decoded : "+wikiPage.title.decoded)
+
+
         val liveCache = new JSONCache(language.wikiCode, wikiPage.id, wikiPage.title.decoded) //
         //TODO option included here, but should be nicer
-        //Console.println(" cache opt : "+LiveOptions.options.get("cache.jsonCacheUpdateNthEdit"))
         liveCache.jsonCacheUpdateNthEdit =  Integer.parseInt(LiveOptions.options.get("cache.jsonCacheUpdateNthEdit"))
-        //Console.println(" nth edit : "+liveCache.jsonCacheUpdateNthEdit)
+
         var destList = new ArrayBuffer[LiveDestination]()  // List of all final destinations
         destList += new JSONCacheUpdateDestination(liveCache)
         destList += new PublisherDiffDestination(wikiPage.id, liveCache.performCleanUpdate(), if (liveCache.cacheObj != null) liveCache.cacheObj.subjects else new java.util.HashSet[String]())
         destList += new LoggerDestination(wikiPage.id, wikiPage.title.decoded,language.wikiCode) // Just to log extraction results
-          
+
         val compositeDest: LiveDestination = new CompositeLiveDestination(destList: _*) // holds all main destinations
 
         val extractorDiffDest = new JSONCacheExtractorDestination(liveCache, compositeDest) // filters triples to add/remove/leave

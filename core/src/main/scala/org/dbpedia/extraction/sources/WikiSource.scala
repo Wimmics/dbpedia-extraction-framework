@@ -70,8 +70,7 @@ object WikiSource
     new Source
     {
         private val api = new WikiApi(url, language)
-        //Console.println(" url > "+url)
-        //Console.println("lang >"+language)
+
         override def foreach[U](f : WikiPage => U) : Unit =
         {
             api.retrievePagesByTitle(titles).foreach(f)
