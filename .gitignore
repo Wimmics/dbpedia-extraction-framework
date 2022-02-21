@@ -12,4 +12,5 @@ dump/test-basedir
 live/log/*
 ### FILE CONTAINING PWD
 /live/live.ini
+/live/live.xml
 /scripts/fr-cache_generate.sql
